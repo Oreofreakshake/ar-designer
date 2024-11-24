@@ -1,118 +1,163 @@
-// app/components/ARFurniture.tsx
 'use client';
 
-import React from 'react';
-import { Camera, AlertCircle } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { Camera, AlertCircle, Plus, Minus, RotateCcw } from 'lucide-react';
+import * as THREE from 'three';
 
 function ARFurniture() {
-  const videoRef = React.useRef<HTMLVideoElement | null>(null);
-  const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
-  const [isStreaming, setIsStreaming] = React.useState<boolean>(false);
-  const [error, setError] = React.useState<string>('');
-  const [debugLog, setDebugLog] = React.useState<string[]>([]);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [isStreaming, setIsStreaming] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+  const [status, setStatus] = useState<string>(''); // For debug info
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
 
-  const addDebugLog = (message: string): void => {
-    console.log(message);
-    setDebugLog(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
-  };
-
-  const checkMediaDevices = async () => {
-    // Add device info to debug log
-    addDebugLog(`User Agent: ${navigator.userAgent}`);
-    addDebugLog(`Platform: ${navigator.platform}`);
-    
-    // Check if mediaDevices exists
-    if (!navigator.mediaDevices) {
-      addDebugLog('mediaDevices not found, trying to initialize');
-      // @ts-ignore - We need this for older browsers
-      if (navigator.mediaDevices === undefined) {
-        // @ts-ignore
-        navigator.mediaDevices = {};
+  const initThreeJS = () => {
+    try {
+      setStatus('Initializing Three.js...');
+      
+      if (!canvasRef.current) {
+        setStatus('Canvas not found');
+        return;
       }
-    }
 
-    // Check if getUserMedia exists
-    if (!navigator.mediaDevices.getUserMedia) {
-      addDebugLog('getUserMedia not found, trying to initialize');
-      // @ts-ignore
-      navigator.mediaDevices.getUserMedia = function(constraints) {
-        addDebugLog('Using polyfill for getUserMedia');
-        // @ts-ignore
-        const getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-        if (!getUserMedia) {
-          return Promise.reject(new Error('getUserMedia is not implemented in this browser'));
+      // Scene setup
+      const scene = new THREE.Scene();
+      sceneRef.current = scene;
+      setStatus('Scene created');
+
+      // Camera setup
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      camera.position.z = 5;
+      cameraRef.current = camera;
+      setStatus('Camera created');
+
+      // Renderer setup
+      const renderer = new THREE.WebGLRenderer({
+        canvas: canvasRef.current,
+        alpha: true,
+        antialias: true,
+      });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      rendererRef.current = renderer;
+      setStatus('Renderer created');
+
+      // Add lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(ambientLight);
+      
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight.position.set(0, 5, 5);
+      scene.add(directionalLight);
+      setStatus('Lights added');
+
+      // Add a test cube
+      const geometry = new THREE.BoxGeometry(1, 1, 1);
+      const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+      const cube = new THREE.Mesh(geometry, material);
+      cube.position.set(0, 0, -3);
+      scene.add(cube);
+      setStatus('Test cube added');
+
+      // Animation loop
+      const animate = () => {
+        if (sceneRef.current && cameraRef.current && rendererRef.current) {
+          requestAnimationFrame(animate);
+          cube.rotation.x += 0.01;
+          cube.rotation.y += 0.01;
+          rendererRef.current.render(sceneRef.current, cameraRef.current);
         }
-        return new Promise((resolve, reject) => {
-          getUserMedia.call(navigator, constraints, resolve, reject);
-        });
       };
+      animate();
+      setStatus('Animation started');
+
+      // Handle touch events
+      const handleTouch = (event: TouchEvent) => {
+        event.preventDefault();
+        setStatus('Screen touched at: ' + event.touches[0].clientX + ', ' + event.touches[0].clientY);
+        
+        const touch = event.touches[0];
+        const rect = canvasRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        
+        const x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+        const y = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
+        
+        const newCube = new THREE.Mesh(geometry, material);
+        const vector = new THREE.Vector3(x, y, -3);
+        vector.unproject(camera);
+        newCube.position.copy(vector);
+        scene.add(newCube);
+        setStatus('New cube added at: ' + x.toFixed(2) + ', ' + y.toFixed(2));
+      };
+
+      canvasRef.current.addEventListener('touchstart', handleTouch, { passive: false });
+
+      return () => {
+        canvasRef.current?.removeEventListener('touchstart', handleTouch);
+        if (rendererRef.current) {
+          rendererRef.current.dispose();
+        }
+      };
+    } catch (err) {
+      setStatus('Error in Three.js init: ' + (err as Error).message);
     }
   };
 
   const startCamera = async (): Promise<void> => {
-    addDebugLog('Attempting to start camera...');
     setError('');
+    setStatus('Starting camera...');
 
     try {
-      await checkMediaDevices();
-      addDebugLog('Media devices checked');
-
-      addDebugLog('Requesting camera stream...');
-      
       const constraints: MediaStreamConstraints = {
         video: {
           facingMode: { ideal: 'environment' },
-          width: { ideal: window.innerWidth },
-          height: { ideal: window.innerHeight }
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
         },
         audio: false
       };
 
+      setStatus('Requesting camera access...');
       let stream: MediaStream;
       try {
-        addDebugLog('Attempting to access environment camera...');
         stream = await navigator.mediaDevices.getUserMedia(constraints);
-        addDebugLog('Got environment camera stream');
+        setStatus('Camera access granted');
       } catch (err) {
-        addDebugLog('Failed to get environment camera, trying default camera');
-        // Fallback to basic camera access
+        setStatus('Falling back to default camera');
         stream = await navigator.mediaDevices.getUserMedia({
           video: true
         });
-        addDebugLog('Got default camera stream');
       }
 
       if (videoRef.current && stream) {
         videoRef.current.srcObject = stream;
-        
         videoRef.current.onloadedmetadata = async () => {
-          addDebugLog('Video metadata loaded');
           if (videoRef.current) {
             try {
               await videoRef.current.play();
-              addDebugLog('Video playing');
               setIsStreaming(true);
+              setStatus('Video playing');
+              initThreeJS();
             } catch (e) {
-              addDebugLog(`Play error: ${e}`);
               setError('Failed to start video playback');
+              setStatus('Video play error: ' + (e as Error).message);
             }
           }
         };
-
-        videoRef.current.onerror = (e) => {
-          addDebugLog(`Video error: ${e}`);
-          setError('Error with video playback');
-        };
-
-        setError('');
-      } else {
-        throw new Error('Failed to initialize video element');
       }
     } catch (err) {
       const error = err as Error;
-      addDebugLog(`Camera error: ${error.name} - ${error.message}`);
-      console.error('Camera error:', error);
-
+      setStatus('Camera error: ' + error.message);
+      
       if (error.name === 'NotAllowedError' || error.message.includes('Permission')) {
         setError('Please allow camera access in your browser settings and try again');
       } else if (error.name === 'NotFoundError') {
@@ -128,8 +173,13 @@ function ARFurniture() {
 
   return (
     <div className="relative w-full h-screen bg-black">
+      {/* Status/Debug Display */}
+      <div className="absolute top-0 left-0 right-0 bg-black/50 text-white p-2 z-50 text-sm">
+        Status: {status}
+      </div>
+
       {error && (
-        <div className="absolute top-4 left-4 right-4 z-50 bg-red-500 text-white p-4 rounded-lg shadow-lg flex items-center gap-2">
+        <div className="absolute top-12 left-4 right-4 z-50 bg-red-500 text-white p-4 rounded-lg shadow-lg flex items-center gap-2">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <span>{error}</span>
         </div>
@@ -142,28 +192,22 @@ function ARFurniture() {
         muted
         className="w-full h-full object-cover"
       />
-      
+
       <canvas
         ref={canvasRef}
-        className="absolute top-0 left-0 w-full h-full"
+        className="absolute inset-0 w-full h-full touch-none"
       />
 
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         {!isStreaming && (
           <button
             onClick={startCamera}
-            className="bg-white rounded-lg px-6 py-3 flex items-center gap-2 shadow-lg z-10 active:scale-95 transition-transform"
+            className="bg-white text-black rounded-lg px-6 py-3 flex items-center gap-2 shadow-lg z-10 active:scale-95 transition-transform"
           >
             <Camera className="w-6 h-6" />
-            Start Camera
+            Start AR Experience
           </button>
         )}
-        
-        <div className="absolute bottom-4 left-4 right-4 text-white text-xs bg-black/70 p-2 rounded max-h-32 overflow-y-auto">
-          {debugLog.map((log, index) => (
-            <div key={index}>{log}</div>
-          ))}
-        </div>
       </div>
     </div>
   );
