@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { Environment, OrbitControls } from '@react-three/drei';
+import { Environment } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import ModelWithControls from './ModelWithControls';
 
@@ -8,7 +8,8 @@ function Scene({ selectedModel, rotationY = 0 }) {
 
   React.useEffect(() => {
     if (camera) {
-      camera.position.set(0, 2, 5);
+      // Set a fixed camera position looking down at an angle
+      camera.position.set(0, 4, 8);
       camera.lookAt(0, 0, 0);
     }
   }, [camera]);
@@ -22,24 +23,20 @@ function Scene({ selectedModel, rotationY = 0 }) {
       <Suspense fallback={null}>
         <Environment preset="sunset" background={false} />
       </Suspense>
-      <OrbitControls 
-        enablePan={true}
-        enableZoom={true}
-        enableRotate={true}
-        minDistance={2}
-        maxDistance={10}
-      />
+      
+      {/* Remove OrbitControls to keep camera fixed */}
 
       {selectedModel && (
         <Suspense fallback={null}>
           <ModelWithControls 
             modelPath={selectedModel.modelPath}
-            initialPosition={[0, -1, -2]}
+            initialPosition={[0, 0, 0]}
             rotation={[0, rotationY, 0]}
           />
         </Suspense>
       )}
 
+      {/* Ground plane */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1, 0]} receiveShadow>
         <planeGeometry args={[100, 100]} />
         <meshStandardMaterial 
