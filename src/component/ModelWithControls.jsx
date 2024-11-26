@@ -3,7 +3,7 @@ import { useThree } from '@react-three/fiber';
 import { useGLTF, Html } from '@react-three/drei';
 import * as THREE from 'three';
 
-function ModelWithControls({ modelPath, initialPosition = [0, -1, -2] }) {
+function ModelWithControls({ modelPath, initialPosition = [0, -1, -2],  rotation = [0, 0, 0] }) {
   const [modelError, setModelError] = useState(null);
   const { scene } = useGLTF(modelPath, undefined, (error) => {
     console.error('Error loading model:', error);
@@ -70,7 +70,10 @@ function ModelWithControls({ modelPath, initialPosition = [0, -1, -2] }) {
   };
 
   return (
-    <group position={position} ref={modelRef}
+    <group 
+      position={position} 
+      rotation={rotation}
+      ref={modelRef}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
