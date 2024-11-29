@@ -129,24 +129,41 @@ export function createScene(renderer: WebGLRenderer) {
 
   function createModelSelector() {
     const selector = document.createElement('div');
-    selector.style.position = 'fixed';
-    selector.style.bottom = '20px';
+    selector.style.position = 'absolute';
+    selector.style.bottom = '50%';
     selector.style.left = '50%';
-    selector.style.transform = 'translateX(-50%)';
-    selector.style.zIndex = '1000';
+    selector.style.transform = 'translate(-50%, 50%)';
     selector.style.display = 'flex';
     selector.style.gap = '10px';
-  
+    
+    let selectedButton: HTMLButtonElement | null = null;
+   
     models.forEach(model => {
       const button = document.createElement('button');
       button.textContent = model.name;
       button.style.padding = '10px 20px';
-      button.onclick = () => setActiveModel(model.name as 'chair' | 'table' | 'bed' | 'closet');
+      button.style.background = 'black';
+      button.style.color = 'white';
+      button.style.border = 'none';
+      button.style.borderRadius = '8px';
+      button.style.transition = 'all 0.3s ease';
+      
+      button.onclick = () => {
+        if (selectedButton) {
+          selectedButton.style.background = 'black';
+          selectedButton.style.color = 'white';
+        }
+        button.style.background = 'white';
+        button.style.color = 'black';
+        selectedButton = button;
+        setActiveModel(model.name as 'chair' | 'table' | 'bed' | 'closet');
+      };
+      
       selector.appendChild(button);
     });
-  
+   
     document.body.appendChild(selector);
-  }
+   }
   
 
 }
