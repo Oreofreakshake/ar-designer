@@ -1,37 +1,37 @@
 {
-  "name": "ar-web",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+  "name": "get-started-with-ar-web",
+  "version": "1.0.0",
+  "description": "A WebXR AR application",
+  "main": "index.ts",
+"scripts": {
+    "start": "webpack serve --https",
+    "start:proxy": "concurrently --names 'wds,ssl-proxy' --prefix-colors 'green,yellow' --kill-others-on-fail \"webpack serve\" \"local-ssl-proxy --source 3001 --target 8080\"",
+    "start:tunnel": "concurrently --names 'wds,ssl-proxy,localtunnel' --prefix-colors 'green,yellow,blue' --kill-others-on-fail \"webpack serve\" \"local-ssl-proxy --source 3001 --target 8080\" \"lt --port 3001\"",
+    "build": "webpack build"
+  },
+  "author": "Adrian Sandaker <adrian.sandaker@soprasteria.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sopra-steria-norge/get-started-with-ar-web"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "@types/three": "^0.138.0",
+    "concurrently": "^7.0.0",
+    "copy-webpack-plugin": "^10.2.4",
+    "css-loader": "^6.7.0",
+    "html-webpack-plugin": "^5.5.0",
+    "local-ssl-proxy": "^2.0.5",
+    "localtunnel": "^2.0.2",
+    "style-loader": "^3.3.1",
+    "terser-webpack-plugin": "^5.3.1",
+    "ts-loader": "^9.2.7",
+    "typescript": "^4.6.2",
+    "webpack": "^5.76.0",
+    "webpack-cli": "^4.9.2",
+    "webpack-dev-server": "^4.7.4"
   },
   "dependencies": {
-    "@react-three/drei": "^9.117.3",
-    "@react-three/fiber": "^8.17.10",
-    "aframe": "^1.6.0",
-    "ar.js": "^2.2.2",
-    "lucide-react": "^0.461.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "three": "^0.170.0"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.13.0",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react-swc": "^3.5.0",
-    "autoprefixer": "^10.4.20",
-    "eslint": "^9.13.0",
-    "eslint-plugin-react": "^7.37.2",
-    "eslint-plugin-react-hooks": "^5.0.0",
-    "eslint-plugin-react-refresh": "^0.4.14",
-    "globals": "^15.11.0",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.15",
-    "vite": "^5.4.10"
+    "three": "^0.138.3"
   }
 }
