@@ -5,6 +5,7 @@ import { handleXRHitTest } from "./utils/hitTest";
 import {
   AmbientLight,
   BoxBufferGeometry,
+  DirectionalLight,
   Mesh,
   MeshBasicMaterial,
   Object3D,
@@ -41,7 +42,7 @@ export function createScene(renderer: WebGLRenderer) {
   //table
   gltfLoader.load(models[1].path, (gltf: GLTF) => {
     table = gltf.scene.children[0];
-    table.scale.set(0.5, 0.5, 0.5);
+    table.scale.set(0.6, 0.6, 0.6);
   });
 
   //bed
@@ -53,7 +54,7 @@ export function createScene(renderer: WebGLRenderer) {
   //closet
   gltfLoader.load(models[3].path, (gltf: GLTF) => {
     closet = gltf.scene.children[0];
-    closet.scale.set(0.5, 0.5, 0.5);
+    closet.scale.set(0.7, 0.7, 0.7);
   });
 
   createModelSelector();
@@ -130,19 +131,26 @@ export function createScene(renderer: WebGLRenderer) {
   function createModelSelector() {
     const selector = document.createElement('div');
     selector.style.position = 'absolute';
-    selector.style.bottom = '50%';
+    selector.style.bottom = '43%';
     selector.style.left = '50%';
     selector.style.transform = 'translate(-50%, 50%)';
     selector.style.display = 'flex';
-    selector.style.gap = '10px';
+    selector.style.flexDirection = 'column'; 
+    selector.style.alignItems = 'center';
+    selector.style.gap = '20px'; 
+    
+    const buttonContainer = document.createElement('div'); 
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.gap = '10px';
     
     let selectedButton: HTMLButtonElement | null = null;
-   
+    
     models.forEach(model => {
       const button = document.createElement('button');
       button.textContent = model.name;
       button.style.padding = '10px 20px';
       button.style.background = 'black';
+      button.style.fontFamily = 'Lexend Deca';
       button.style.color = 'white';
       button.style.border = 'none';
       button.style.borderRadius = '8px';
@@ -159,11 +167,14 @@ export function createScene(renderer: WebGLRenderer) {
         setActiveModel(model.name as 'chair' | 'table' | 'bed' | 'closet');
       };
       
-      selector.appendChild(button);
+      buttonContainer.appendChild(button);
     });
-   
+
+    
+    
+    selector.appendChild(buttonContainer);
     document.body.appendChild(selector);
-   }
+  }
   
 
 }

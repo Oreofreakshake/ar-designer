@@ -1,5 +1,5 @@
 body {
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: 'Lexend Deca', sans-serif;
   text-align: center;
   margin: 0;
   background-color: #3b3b3d;
@@ -24,6 +24,12 @@ canvas {
   padding: 32px;
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.instruct-container {
+  color: white;
+  font-size: 14px;
+  margin-top: 24px;
 }
 
 h1 {
